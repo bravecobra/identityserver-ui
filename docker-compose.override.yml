@@ -1,0 +1,9 @@
+version: '3.4'
+
+services:
+  sts:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__IdentityDb=Server=postgresdb;Database=identityserverui;Username=postgres;Password=postgres
+      - ConnectionStrings__PersistedGrantDb=Server=postgresdb;Database=identityserverui;Username=postgres;Password=postgres
+      - ConnectionStrings__ConfigurationDb=Server=postgresdb;Database=identityserverui;Username=postgres;Password=postgres
