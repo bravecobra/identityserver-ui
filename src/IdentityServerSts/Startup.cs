@@ -7,8 +7,11 @@ using System.Reflection;
 using IdentityServer4;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
+using IdentityServerAspNetIdentity.Models;
+using IdentityServerSts.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,14 +35,20 @@ namespace IdentityServerSts
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
             // uncomment, if you want to add an MVC-based UI
             services.AddControllersWithViews();
 
-            var builder = services.AddIdentityServer()
-                //.AddInMemoryIdentityResources(Config.Ids)
-                //.AddInMemoryApiResources(Config.Apis)
-                //.AddInMemoryClients(Config.Clients)
-                .AddTestUsers(TestUsers.Users)
+            var builder = services.AddIdentityServer(options => {
+                    options.Events.RaiseErrorEvents = true;
+                    options.Events.RaiseInformationEvents = true;
+                    options.Events.RaiseFailureEvents = true;
+                    options.Events.RaiseSuccessEvents = true;
+                })
+                .AddAspNetIdentity<ApplicationUser>()
                 .AddConfigurationStore(options =>
                 {
                     options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
@@ -100,38 +109,37 @@ namespace IdentityServerSts
 
         private void InitializeDatabase(IApplicationBuilder app)
         {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            using var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+            serviceScope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+            serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+
+            var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+            context.Database.Migrate();
+            if (!context.Clients.Any())
             {
-                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
-
-                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
-                context.Database.Migrate();
-                if (!context.Clients.Any())
+                foreach (var client in Config.Clients)
                 {
-                    foreach (var client in Config.Clients)
-                    {
-                        context.Clients.Add(client.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.Clients.Add(client.ToEntity());
                 }
+                context.SaveChanges();
+            }
 
-                if (!context.IdentityResources.Any())
+            if (!context.IdentityResources.Any())
+            {
+                foreach (var resource in Config.Ids)
                 {
-                    foreach (var resource in Config.Ids)
-                    {
-                        context.IdentityResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.IdentityResources.Add(resource.ToEntity());
                 }
+                context.SaveChanges();
+            }
 
-                if (!context.ApiResources.Any())
+            if (!context.ApiResources.Any())
+            {
+                foreach (var resource in Config.Apis)
                 {
-                    foreach (var resource in Config.Apis)
-                    {
-                        context.ApiResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.ApiResources.Add(resource.ToEntity());
                 }
+                context.SaveChanges();
             }
         }
     }
