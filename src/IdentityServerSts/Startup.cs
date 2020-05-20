@@ -33,9 +33,8 @@ namespace IdentityServerSts
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("IdentityDb")));
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
@@ -51,12 +50,12 @@ namespace IdentityServerSts
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddConfigurationStore(options =>
                 {
-                    options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
+                    options.ConfigureDbContext = b => b.UseSqlServer(_configuration.GetConnectionString("ConfigurationDb"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
                 })
                 .AddOperationalStore(options =>
                 {
-                    options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
+                    options.ConfigureDbContext = b => b.UseSqlServer(_configuration.GetConnectionString("PersistedGrantDb"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
                 });;
 
