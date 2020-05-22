@@ -8,6 +8,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
+using Api;
 
 namespace IdentityServerSts
 {
@@ -15,6 +16,7 @@ namespace IdentityServerSts
     {
         public static int Main(string[] args)
         {
+            "update-ca-certificates".Bash();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)

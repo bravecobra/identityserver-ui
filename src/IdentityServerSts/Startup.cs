@@ -11,6 +11,7 @@ using IdentityServerAspNetIdentity.Models;
 using IdentityServerSts.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -40,8 +41,15 @@ namespace IdentityServerSts
                 .AddDefaultTokenProviders();
             // uncomment, if you want to add an MVC-based UI
             services.AddControllersWithViews();
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.All;
+            });
 
-            var builder = services.AddIdentityServer(options => {
+            var builder = services.AddIdentityServer(options =>
+                {
+                    options.IssuerUri = "https://sts.localhost.com";
+                    options.PublicOrigin = "https://sts.localhost.com";
                     options.Events.RaiseErrorEvents = true;
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
@@ -67,6 +75,9 @@ namespace IdentityServerSts
                     policy.WithOrigins("http://localhost:5003")
                         .AllowAnyHeader()
                         .AllowAnyMethod();
+                    policy.WithOrigins("https://jsclient.localhost.com")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
                 });
             });
 
@@ -85,6 +96,7 @@ namespace IdentityServerSts
 
         public void Configure(IApplicationBuilder app)
         {
+            app.UseForwardedHeaders();
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

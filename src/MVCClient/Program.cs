@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Api;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -13,6 +14,7 @@ namespace MVCClient
     {
         public static void Main(string[] args)
         {
+            "update-ca-certificates".Bash();
             CreateHostBuilder(args).Build().Run();
         }
 

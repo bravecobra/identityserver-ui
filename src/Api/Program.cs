@@ -13,6 +13,7 @@ namespace Api
     {
         public static void Main(string[] args)
         {
+            "update-ca-certificates".Bash();
             CreateHostBuilder(args).Build().Run();
         }
 

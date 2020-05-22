@@ -4,6 +4,9 @@ services:
   sts:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__IdentityDb=Server=postgresdb;Database=identityserverui;Username=postgres;Password=postgres
-      - ConnectionStrings__PersistedGrantDb=Server=postgresdb;Database=identityserverui;Username=postgres;Password=postgres
-      - ConnectionStrings__ConfigurationDb=Server=postgresdb;Database=identityserverui;Username=postgres;Password=postgres
+      - "ConnectionStrings__IdentityDb=Server=sqlserverdb;Database=IdentityUI;User Id=sa;Password=${DB_PASSWORD:-Password_123};MultipleActiveResultSets=true"
+      - "ConnectionStrings__PersistedGrantDb=Server=sqlserverdb;Database=IdentityUI;User Id=sa;Password=${DB_PASSWORD:-Password_123};MultipleActiveResultSets=true"
+      - "ConnectionStrings__ConfigurationDb=Server=sqlserverdb;Database=IdentityUI;User Id=sa;Password=${DB_PASSWORD:-Password_123};MultipleActiveResultSets=true"
+  mvcclient:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development

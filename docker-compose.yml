@@ -1,41 +1,90 @@
 version: '3.4'
 
 services:
-  postgresdb:
-    image: "postgres"
-    container_name: "postgresdb"
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./compose/nginx/vhost.d:/etc/nginx/vhost.d
+      - ./compose/nginx/certs:/etc/nginx/certs:ro
+      #- ./compose/nginx/nginx.tmpl:/etc/nginx/nginx.tmpl:ro
+      #- ./compose/nginx/conf.d:/etc/nginx/conf.d:ro
+      #- ./compose/nginx/html:/usr/share/nginx/html:ro
+    networks:
+      - proxy
+      - identityserverui
+    restart: always
+  sqlserverdb:
+    image: microsoft/mssql-server-linux:latest
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=identityserverui
+      SA_PASSWORD: "${DB_PASSWORD:-Password_123}"
+      ACCEPT_EULA: "Y"
+    container_name: "sqlserverdb"
     networks:
       identityserverui: null
-    ports:
-      - "5432:5432"
     volumes:
-      - postgresdb:/var/lib/postgresql/data
+      - mssql-server-linux-data:/var/opt/mssql/data
+    ports:
+      - "1433:1433"
+  # postgresdb:
+  #   image: "postgres"
+  #   container_name: "postgresdb"
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgres
+  #     - POSTGRES_DB=identityserverui
+  #   networks:
+  #     identityserverui: null
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgresdb:/var/lib/postgresql/data
   sts:
     image: ${DOCKER_REGISTRY-}identityserversts
     container_name: "sts"
     build:
       context: .
       dockerfile: src/IdentityServerSts/Dockerfile
-    ports:
-      - "5000:80"
     depends_on:
-      - postgresdb
+      - sqlserverdb
+    environment:
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=443
+      - VIRTUAL_HOST=sts.localhost.com
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
+    volumes:
+      - ./compose/nginx/certs:/root/.aspnet/https
+      - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
     networks:
-      identityserverui: null
+      identityserverui:
+        aliases:
+          - sts.localhost.com
   api:
     image: ${DOCKER_REGISTRY-}api
     container_name: "api"
     build:
       context: .
       dockerfile: src/Api/Dockerfile
-    ports:
-      - "5001:80"
     networks:
-      identityserverui: null
+      identityserverui:
+        aliases:
+          - api.localhost.com
+    environment:
+      - VIRTUAL_HOST=api.localhost.com
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ASPNETCORE_HTTPS_PORT=443
+      - Auth__Authority=https://sts.localhost.com
+      - Auth__AllowCORS__0=https://jsclient.localhost.com
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
+    volumes:
+      - ./compose/nginx/certs:/root/.aspnet/https
+      - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
   jsclient:
     image: ${DOCKER_REGISTRY-}jsclient
     container_name: "jsclient"
@@ -44,23 +93,34 @@ services:
       dockerfile: src/JavaScriptClient/Dockerfile
     networks:
       identityserverui: null
+    environment:
+      - VIRTUAL_HOST=jsclient.localhost.com
+      - Auth__Authority=https://sts.localhost.com
   mvcclient:
     image: ${DOCKER_REGISTRY-}mvcclient
     container_name: "mvcclient"
     build:
       context: .
       dockerfile: src/MVCClient/Dockerfile
-    ports:
-      - "5002:80"
+    cap_add:
+      - NET_ADMIN
     networks:
       identityserverui: null
+    environment:
+      - VIRTUAL_HOST=mvcclient.localhost.com
+      - Auth__Authority=https://sts.localhost.com
+      - Api1__Uri=https://api.localhost.com
+    volumes:
+      - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
+
 networks:
+  proxy:
+    driver: bridge
   identityserverui:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 10.10.0.0/24
 
 volumes:
-  postgresdb:
+  mssql-server-linux-data:
     driver: local
+  # postgresdb:
+  #   driver: local
