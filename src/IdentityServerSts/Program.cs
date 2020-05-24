@@ -8,15 +8,19 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Api;
+using IdentityServerSts.Data;
 
 namespace IdentityServerSts
 {
     public class Program
     {
-        public static int Main(string[] args)
+        private const string SeedArgs = "/seed";
+
+        public static async Task<int> Main(string[] args)
         {
-            "update-ca-certificates".Bash();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
@@ -26,7 +30,7 @@ namespace IdentityServerSts
                 .Enrich.FromLogContext()
                 // uncomment to write to Azure diagnostics stream
                 //.WriteTo.File(
-                //    @"D:\home\LogFiles\Application\identityserver.txt",
+                //    @"identityserver.txt",
                 //    fileSizeLimitBytes: 1_000_000,
                 //    rollOnFileSizeLimit: true,
                 //    shared: true,
@@ -37,7 +41,18 @@ namespace IdentityServerSts
             try
             {
                 Log.Information("Starting host...");
-                CreateHostBuilder(args).Build().Run();
+                "update-ca-certificates".Bash();
+                var seed = args.Any(x => x == SeedArgs);
+                if (seed) args = args.Except(new[] { SeedArgs }).ToArray();
+
+                var host = CreateHostBuilder(args).Build();
+                await DbMigrationHelper.Migrate(host);
+                if (seed)
+                {
+                    await DbSeederHelper.Seed(host);
+                }
+
+                await host.RunAsync();
                 return 0;
             }
             catch (Exception ex)
