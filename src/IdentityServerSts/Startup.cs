@@ -2,11 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using IdentityServer4;
 using IdentityServer4.EntityFramework.DbContexts;
-using IdentityServer4.EntityFramework.Mappers;
 using IdentityServerAspNetIdentity.Models;
 using IdentityServerSts.Data;
 using Microsoft.AspNetCore.Builder;
@@ -39,7 +38,6 @@ namespace IdentityServerSts
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
-            // uncomment, if you want to add an MVC-based UI
             services.AddControllersWithViews();
             services.Configure<ForwardedHeadersOptions>(options =>
             {
@@ -48,8 +46,8 @@ namespace IdentityServerSts
 
             var builder = services.AddIdentityServer(options =>
                 {
-                    options.IssuerUri = "https://sts.localhost.com";
-                    options.PublicOrigin = "https://sts.localhost.com";
+                    options.IssuerUri = _configuration.GetValue<string>("IdentityServer:IssuerUri");
+                    options.PublicOrigin = _configuration.GetValue<string>("IdentityServer:PublicOrigin");
                     options.Events.RaiseErrorEvents = true;
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
@@ -65,19 +63,22 @@ namespace IdentityServerSts
                 {
                     options.ConfigureDbContext = b => b.UseSqlServer(_configuration.GetConnectionString("PersistedGrantDb"),
                         sql => sql.MigrationsAssembly(migrationsAssembly));
-                });;
+                });
 
             services.AddCors(options =>
             {
                 // this defines a CORS policy called "default"
+                var list = new List<string>();
+                _configuration.GetSection("Auth:AllowCORS").Bind(list);
                 options.AddPolicy("default", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5003")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                    policy.WithOrigins("https://jsclient.localhost.com")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
+                    foreach (var allowedCors in list)
+                    {
+                        policy.WithOrigins(allowedCors)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                    }
+
                 });
             });
 
@@ -103,14 +104,12 @@ namespace IdentityServerSts
             }
             InitializeDatabase(app);
 
-            // uncomment if you want to add MVC
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("default");
 
             app.UseIdentityServer();
 
-            // uncomment, if you want to add MVC
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {

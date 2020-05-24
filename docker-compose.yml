@@ -57,6 +57,7 @@ services:
       - VIRTUAL_HOST=sts.localhost.com
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
       - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
+      - Auth__AllowCORS__0=https://jsclient.localhost.com
     volumes:
       - ./compose/nginx/certs:/root/.aspnet/https
       - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
@@ -80,6 +81,8 @@ services:
       - ASPNETCORE_HTTPS_PORT=443
       - Auth__Authority=https://sts.localhost.com
       - Auth__AllowCORS__0=https://jsclient.localhost.com
+      - IdentityServer__IssuerUri=https://sts.localhost.com
+      - IdentityServer__OriginUri=https://sts.localhost.com
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
       - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
     volumes:

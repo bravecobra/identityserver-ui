@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,22 +12,25 @@ namespace Api
         public static string Bash(this string cmd)
         {
             var escapedArgs = cmd.Replace("\"", "\\\"");
-            
-            var process = new Process()
+            if (File.Exists("/bin/bash"))
             {
-                StartInfo = new ProcessStartInfo
+                var process = new Process()
                 {
-                    FileName = "/bin/bash",
-                    Arguments = $"-c \"{escapedArgs}\"",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                }
-            };
-            process.Start();
-            string result = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-            return result;
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "/bin/bash",
+                        Arguments = $"-c \"{escapedArgs}\"",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                    }
+                };
+                process.Start();
+                var result = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+                return result;
+            }
+            return string.Empty;
         }
     }
 }
