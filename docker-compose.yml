@@ -46,6 +46,7 @@ services:
   sts:
     image: ${DOCKER_REGISTRY-}identityserversts
     container_name: "sts"
+    command: dotnet IdentityServerSts.dll /seed
     build:
       context: .
       dockerfile: src/IdentityServerSts/Dockerfile
@@ -58,9 +59,13 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
       - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
       - Auth__AllowCORS__0=https://jsclient.localhost.com
+      - IdentityServer__IssuerUri=https://sts.localhost.com
+      - IdentityServer__PublicOrigin=https://sts.localhost.com
     volumes:
       - ./compose/nginx/certs:/root/.aspnet/https
       - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
+      - ./compose/sts/SeedData.json:/app/SeedData.json
+      - ${APPDATA}\Microsoft\UserSecrets:/root/.microsoft/usersecrets:ro
     networks:
       identityserverui:
         aliases:
@@ -112,8 +117,10 @@ services:
     environment:
       - VIRTUAL_HOST=mvcclient.localhost.com
       - Auth__Authority=https://sts.localhost.com
+      - Auth__RedirectUri=https://mvcclient.localhost.com/signin-oidc
       - Api1__Uri=https://api.localhost.com
     volumes:
+      - ./compose/nginx/certs:/root/.aspnet/https
       - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
 
 networks:

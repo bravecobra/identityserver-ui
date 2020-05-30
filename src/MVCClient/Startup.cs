@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -46,6 +47,12 @@ namespace MVCClient
 
                     options.Scope.Add("api1");
                     options.Scope.Add("offline_access");
+                    options.Events.OnRedirectToIdentityProvider = async n =>
+                    {
+                        n.ProtocolMessage.RedirectUri = Configuration.GetValue<string>("Auth:RedirectUri");
+                        await Task.FromResult(0);
+                    };
+
                 });
         }
 
