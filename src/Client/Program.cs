@@ -1,10 +1,10 @@
-﻿using System;
+﻿using IdentityModel.Client;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using IdentityModel.Client;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
 
 namespace Client
 {
@@ -16,8 +16,8 @@ namespace Client
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddUserSecrets<Program>()
-                .AddEnvironmentVariables(); 
- 
+                .AddEnvironmentVariables();
+
             IConfigurationRoot configuration = builder.Build();
             // discover endpoints from metadata
             var client = new HttpClient();

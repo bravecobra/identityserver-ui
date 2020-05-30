@@ -1,12 +1,12 @@
-﻿using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using IdentityServer4.EntityFramework.Interfaces;
+﻿using IdentityServer4.EntityFramework.Interfaces;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace IdentityServerSts.Data
 {

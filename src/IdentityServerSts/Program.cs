@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using Api;
+using IdentityServerSts.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -10,8 +12,6 @@ using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Api;
-using IdentityServerSts.Data;
 
 namespace IdentityServerSts
 {

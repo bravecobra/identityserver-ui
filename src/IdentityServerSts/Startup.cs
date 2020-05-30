@@ -2,10 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using System.Collections.Generic;
-using System.Reflection;
 using IdentityServer4;
-using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServerAspNetIdentity.Models;
 using IdentityServerSts.Data;
 using Microsoft.AspNetCore.Builder;
@@ -16,6 +13,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace IdentityServerSts
 {
@@ -89,7 +88,59 @@ namespace IdentityServerSts
 
                     options.ClientId = _configuration.GetValue<string>("Google:ClientId");
                     options.ClientSecret = _configuration.GetValue<string>("Google:ClientSecret");
-                });
+                })
+
+            //    .AddOpenIdConnect("oidc", "Some Other OIDC", options =>
+            //     {
+            //         options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+            //         options.SignOutScheme = IdentityServerConstants.SignoutScheme;
+            //         options.SaveTokens = true;
+            //
+            //         options.Authority = "<OIDC Authotiry URI>";
+            //         options.ClientId = "<ClientID>";
+            //         options.ClientSecret = "<ClientSecret>";
+            //         options.ResponseType = "code";
+            //
+            //         options.Scope.Clear();
+            //         options.Scope.Add("openid");
+            //         options.CallbackPath = new PathString("/callback");
+            //         options.ClaimsIssuer = "<ClaimIssuer>";
+            //         // Saves tokens to the AuthenticationProperties
+            //         options.SaveTokens = true;
+            //
+            //         options.Events = new OpenIdConnectEvents
+            //         {
+            //             // handle the logout redirection
+            //             OnRedirectToIdentityProviderForSignOut = (context) =>
+            //             {
+            //                 var logoutUri =
+            //                     $"<Logout URI>";
+            //
+            //                 var postLogoutUri = context.Properties.RedirectUri;
+            //                 if (!string.IsNullOrEmpty(postLogoutUri))
+            //                 {
+            //                     if (postLogoutUri.StartsWith("/"))
+            //                     {
+            //                         // transform to absolute
+            //                         var request = context.Request;
+            //                         postLogoutUri = request.Scheme + "://" + request.Host + request.PathBase +
+            //                                         postLogoutUri;
+            //                     }
+            //
+            //                     logoutUri += $"&returnTo={Uri.EscapeDataString(postLogoutUri)}";
+            //                 }
+            //
+            //                 context.Response.Redirect(logoutUri);
+            //                 context.HandleResponse();
+            //
+            //                 return Task.CompletedTask;
+            //             }
+            //         };
+            //     }
+            // )
+            ;
+
+
 
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
