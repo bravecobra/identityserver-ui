@@ -15,8 +15,13 @@ services:
       #- ./compose/nginx/conf.d:/etc/nginx/conf.d:ro
       #- ./compose/nginx/html:/usr/share/nginx/html:ro
     networks:
-      - proxy
-      - identityserverui
+      proxy: null
+      identityserverui:
+          aliases:
+            - sts.localhost.com
+            - api.localhost.com
+            - jsclient.localhost.com
+            - mvcclient.localhost.com
     restart: always
   sqlserverdb:
     image: microsoft/mssql-server-linux:latest
@@ -53,23 +58,16 @@ services:
     depends_on:
       - sqlserverdb
     environment:
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_HTTPS_PORT=443
       - VIRTUAL_HOST=sts.localhost.com
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
       - Auth__AllowCORS__0=https://jsclient.localhost.com
       - IdentityServer__IssuerUri=https://sts.localhost.com
       - IdentityServer__PublicOrigin=https://sts.localhost.com
     volumes:
-      - ./compose/nginx/certs:/root/.aspnet/https
       - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
       - ./compose/sts/SeedData.json:/app/SeedData.json
       - ${APPDATA}\Microsoft\UserSecrets:/root/.microsoft/usersecrets:ro
     networks:
-      identityserverui:
-        aliases:
-          - sts.localhost.com
+      identityserverui: null
   api:
     image: ${DOCKER_REGISTRY-}api
     container_name: "api"
@@ -77,21 +75,14 @@ services:
       context: .
       dockerfile: src/Api/Dockerfile
     networks:
-      identityserverui:
-        aliases:
-          - api.localhost.com
+      identityserverui: null
+    depends_on:
+      - sts
     environment:
       - VIRTUAL_HOST=api.localhost.com
-      - ASPNETCORE_URLS=https://+:443;http://+:80
-      - ASPNETCORE_HTTPS_PORT=443
       - Auth__Authority=https://sts.localhost.com
       - Auth__AllowCORS__0=https://jsclient.localhost.com
-      - IdentityServer__IssuerUri=https://sts.localhost.com
-      - IdentityServer__OriginUri=https://sts.localhost.com
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/root/.aspnet/https/localhost.com.pfx+2.p12
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=changeit
     volumes:
-      - ./compose/nginx/certs:/root/.aspnet/https
       - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
   jsclient:
     image: ${DOCKER_REGISTRY-}jsclient
@@ -101,6 +92,8 @@ services:
       dockerfile: src/JavaScriptClient/Dockerfile
     networks:
       identityserverui: null
+    depends_on:
+      - sts
     environment:
       - VIRTUAL_HOST=jsclient.localhost.com
       - Auth__Authority=https://sts.localhost.com
@@ -112,6 +105,8 @@ services:
       dockerfile: src/MVCClient/Dockerfile
     cap_add:
       - NET_ADMIN
+    depends_on:
+      - sts
     networks:
       identityserverui: null
     environment:
@@ -120,7 +115,6 @@ services:
       - Auth__RedirectUri=https://mvcclient.localhost.com/signin-oidc
       - Api1__Uri=https://api.localhost.com
     volumes:
-      - ./compose/nginx/certs:/root/.aspnet/https
       - ./compose/nginx/certs/cacerts.crt:/usr/local/share/ca-certificates/cacerts.crt
 
 networks:

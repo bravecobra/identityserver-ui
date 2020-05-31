@@ -47,12 +47,13 @@ namespace MVCClient
 
                     options.Scope.Add("api1");
                     options.Scope.Add("offline_access");
-                    options.Events.OnRedirectToIdentityProvider = async n =>
-                    {
-                        n.ProtocolMessage.RedirectUri = Configuration.GetValue<string>("Auth:RedirectUri");
-                        await Task.FromResult(0);
-                    };
-
+                    if (!string.IsNullOrEmpty(Configuration.GetValue<string>("Auth:RedirectUri"))){
+                        options.Events.OnRedirectToIdentityProvider = async n =>
+                        {
+                            n.ProtocolMessage.RedirectUri = Configuration.GetValue<string>("Auth:RedirectUri");
+                            await Task.FromResult(0);
+                        };
+                    }
                 });
         }
 
