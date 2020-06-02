@@ -3,7 +3,6 @@
 
 
 using IdentityServer4;
-using IdentityServerAspNetIdentity.Models;
 using IdentityServerSts.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -14,14 +13,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
+using System;
 using System.Reflection;
+using IdentityServerSTS;
+using IdentityServerSts.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace IdentityServerSts
 {
     public class Startup
     {
         private readonly IConfiguration _configuration;
-        public IWebHostEnvironment Environment { get; }
+        private IWebHostEnvironment Environment { get; }
 
         public Startup(IWebHostEnvironment environment, IConfiguration configuration)
         {
@@ -34,10 +39,14 @@ namespace IdentityServerSts
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
 
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("IdentityDb")));
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddDistributedMemoryCache();
+            services.AddDefaultIdentity<ApplicationUser>(options =>
+                {
+                    options.SignIn.RequireConfirmedEmail = false;
+                })
+                .AddDefaultUI()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
-            services.AddControllersWithViews();
             services.Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.All;
@@ -51,6 +60,13 @@ namespace IdentityServerSts
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
                     options.Events.RaiseSuccessEvents = true;
+                    options.UserInteraction.LoginUrl = "/Account/Login";
+                    options.UserInteraction.LogoutUrl = "/Account/Logout";
+                    options.Authentication = new IdentityServer4.Configuration.AuthenticationOptions
+                    {
+                        CookieLifetime = TimeSpan.FromHours(10), // ID server cookie timeout set to 10 hours
+                        CookieSlidingExpiration = true
+                    };
                 })
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddConfigurationStore(options =>
@@ -81,15 +97,21 @@ namespace IdentityServerSts
                 });
             });
 
-            services.AddAuthentication()
+            services.AddAuthentication(options =>
+                {
+                    // options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    // options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    // options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                })
+                .AddCookie()
                 .AddGoogle("Google", options =>
                 {
-                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    //options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.SaveTokens = true;
 
                     options.ClientId = _configuration.GetValue<string>("Google:ClientId");
                     options.ClientSecret = _configuration.GetValue<string>("Google:ClientSecret");
                 })
-
             //    .AddOpenIdConnect("oidc", "Some Other OIDC", options =>
             //     {
             //         options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
@@ -140,10 +162,32 @@ namespace IdentityServerSts
             // )
             ;
 
-
-
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => Environment.IsProduction();
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
+            services.AddControllersWithViews().AddNewtonsoftJson();
+            services.AddRazorPages()
+                .AddRazorPagesOptions(options =>
+                {
+                    options.Conventions.AuthorizeAreaFolder("Identity", "/Account/Manage");
+                    options.Conventions.AuthorizeAreaPage("Identity", "/Account/Logout");
+                });
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+                options.LoginPath = $"/Identity/Account/Login";
+                options.LogoutPath = $"/Identity/Account/Logout";
+                options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+                options.SlidingExpiration = true;
+
+            });
+            services.AddSingleton<IEmailSender, EmailSender>();
         }
 
         public void Configure(IApplicationBuilder app)
@@ -157,13 +201,17 @@ namespace IdentityServerSts
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("default");
+            //app.UseCookiePolicy();
 
             app.UseIdentityServer();
-
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapDefaultControllerRoute();
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapRazorPages();
             });
         }
     }
