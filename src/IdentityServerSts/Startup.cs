@@ -201,7 +201,6 @@ namespace IdentityServerSts
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("default");
-            //app.UseCookiePolicy();
 
             app.UseIdentityServer();
             app.UseAuthentication();
