@@ -1,0 +1,38 @@
+name: CI
+
+on: [push]
+
+jobs:
+
+  build:
+    name: Run Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@master
+      with:
+        dotnet-version: 3.1.x
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+
+    - name: Build .NET solution
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      run: |
+        dotnet --version
+        dotnet build ./identityserver-ui.sln --configuration Release
+
+    - name: Test .NET solution
+      env:
+        DOTNET_CLI_TELEMETRY_OPTOUT: 1
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      run: |
+        dotnet --version
+        dotnet test ./identityserver-ui.sln --configuration Release
