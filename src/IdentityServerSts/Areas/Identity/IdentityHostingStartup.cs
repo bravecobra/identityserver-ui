@@ -1,8 +1,8 @@
-﻿using IdentityServerSTS.Areas.Identity;
+﻿using IdentityServerSts.Areas.Identity;
 using Microsoft.AspNetCore.Hosting;
 
 [assembly: HostingStartup(typeof(IdentityHostingStartup))]
-namespace IdentityServerSTS.Areas.Identity
+namespace IdentityServerSts.Areas.Identity
 {
     public class IdentityHostingStartup : IHostingStartup
     {

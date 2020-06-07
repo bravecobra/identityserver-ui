@@ -15,7 +15,6 @@ using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
-using IdentityServerSTS;
 using IdentityServerSts.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -23,6 +22,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace IdentityServerSts
 {
+    /// <summary>
+    /// This is the summary of the startup class
+    /// </summary>
     public class Startup
     {
         private readonly IConfiguration _configuration;

@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace IdentityServerSTS.Areas.Identity.Pages.Account.Manage
+namespace IdentityServerSts.Areas.Identity.Pages.Account.Manage
 {
     public static class ManageNavPages
     {
@@ -28,9 +28,6 @@ namespace IdentityServerSTS.Areas.Identity.Pages.Account.Manage
         public static string PersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, PersonalData);
 
         public static string TwoFactorAuthenticationNavClass(ViewContext viewContext) => PageNavClass(viewContext, TwoFactorAuthentication);
-
-        public static string Fido2Mfa => "Fido2Mfa";
-        public static string Fido2MfaNavClass(ViewContext viewContext) => PageNavClass(viewContext, Fido2Mfa);
 
         private static string PageNavClass(ViewContext viewContext, string page)
         {

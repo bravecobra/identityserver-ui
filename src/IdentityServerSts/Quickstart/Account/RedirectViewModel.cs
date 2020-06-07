@@ -3,7 +3,7 @@
 
 
 
-namespace IdentityServerSts
+namespace IdentityServerSts.Quickstart.Account
 {
     public class RedirectViewModel
     {

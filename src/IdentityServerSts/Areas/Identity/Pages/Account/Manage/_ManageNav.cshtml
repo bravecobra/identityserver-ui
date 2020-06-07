@@ -1,5 +1,5 @@
 ﻿@using IdentityServerSts.Models
-@using IdentityServerSTS.Areas.Identity.Pages.Account.Manage
+@using IdentityServerSts.Areas.Identity.Pages.Account.Manage
 @inject SignInManager<ApplicationUser> SignInManager
 @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();

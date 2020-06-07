@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-namespace IdentityServerSts.Device
+using IdentityServerSts.Quickstart.Consent;
+
+namespace IdentityServerSts.Quickstart.Device
 {
     public class DeviceAuthorizationViewModel : ConsentViewModel
     {
