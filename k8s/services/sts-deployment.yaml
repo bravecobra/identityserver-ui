@@ -1,0 +1,105 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: sts-dbconnection
+  namespace: identityserver-ui
+data:
+  DBConnection: U2VydmVyPXNxbHNlcnZlcmRiLXN2YztEYXRhYmFzZT1JZGVudGl0eVVJO1VzZXIgSWQ9c2E7UGFzc3dvcmQ9UGFzc3dvcmRfMTIzO011bHRpcGxlQWN0aXZlUmVzdWx0U2V0cz10cnVl
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: sts
+  name: sts
+  namespace: identityserver-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: sts
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: sts
+    spec:
+      containers:
+      - args:
+        - dotnet
+        - IdentityServerSts.dll
+        - /seed
+        env:
+        - name: Auth__AllowCORS__0
+          value: https://jsclient.localhost.com
+        - name: IdentityServer__IssuerUri
+          value: https://sts.localhost.com
+        - name: IdentityServer__PublicOrigin
+          value: https://sts.localhost.com
+        - name: VIRTUAL_HOST
+          value: sts.localhost.com
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        - name: Google__ClientId
+          valueFrom:
+            secretKeyRef:
+              name: sts-google
+              key: Google_ClientId
+        - name: Google__ClientSecret
+          valueFrom:
+            secretKeyRef:
+              name: sts-google
+              key: Google_ClientSecret
+        - name: Google__Enabled
+          value: "Y"
+        - name: ConnectionStrings__IdentityDb
+          valueFrom:
+            secretKeyRef:
+              name: sts-dbconnection
+              key: DBConnection
+        - name: ConnectionStrings__PersistedGrantDb
+          valueFrom:
+            secretKeyRef:
+              name: sts-dbconnection
+              key: DBConnection
+        - name: ConnectionStrings__ConfigurationDb
+          valueFrom:
+            secretKeyRef:
+              name: sts-dbconnection
+              key: DBConnection
+        image: identityserversts
+        imagePullPolicy : IfNotPresent
+        name: sts
+        resources: {}
+        volumeMounts:
+        - name: ca-pemstore
+          mountPath: /etc/ssl/certs/cacerts.pem
+          subPath: cacerts.pem
+          readOnly: false
+        - name: seeddata
+          mountPath: /app/SeedData.json
+          subPath: SeedData.json
+          readOnly: true
+      restartPolicy: Always
+      volumes:
+        - name: ca-pemstore
+          configMap:
+            name: ca-pemstore
+        - name: seeddata
+          configMap:
+            name: seeddata
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sts-svc
+  namespace: identityserver-ui
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  selector:
+    service: sts
+---

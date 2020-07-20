@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    service: mssql-server-linux-data
+  name: mssql-server-linux-data
+  namespace: identityserver-ui
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+status: {}
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  name: sqlserverdb
+  namespace: identityserver-ui
+data:
+  sa_password: UGFzc3dvcmRfMTIz
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqlserverdb
+  namespace: identityserver-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: sqlserverdb
+  template:
+    metadata:
+      labels:
+        service: sqlserverdb
+    spec:
+      terminationGracePeriodSeconds: 120
+      containers:
+      - name: sqlserverdb
+        image: microsoft/mssql-server-linux:latest
+        ports:
+        - containerPort: 1433
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sqlserverdb
+              key: sa_password
+        volumeMounts:
+        - mountPath: /var/opt/mssql/data
+          name: mssql-server-linux-data
+      restartPolicy: Always
+      volumes:
+      - name: mssql-server-linux-data
+        persistentVolumeClaim:
+          claimName: mssql-server-linux-data
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserverdb-svc
+  namespace: identityserver-ui
+spec:
+  ports:
+  - name: "1433"
+    port: 1433
+    targetPort: 1433
+  selector:
+    service: sqlserverdb
+  type: LoadBalancer
+status:
+  loadBalancer: {}

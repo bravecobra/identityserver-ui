@@ -1,0 +1,67 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+  #   # Enable client certificate authentication
+  #   nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+  #   # Create the secret containing the trusted ca certificates
+  #   nginx.ingress.kubernetes.io/auth-tls-secret: "default/ca-secret"
+  #   # Specify the verification depth in the client certificates chain
+  #   nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"
+  #   # Specify an error page to be redirected to verification errors
+  #   #nginx.ingress.kubernetes.io/auth-tls-error-page: "http://www.mysite.com/error-cert.html"
+  #   # Specify if certificates are passed to upstream server
+  #   nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+    #nginx.ingress.kubernetes.io/server-alias: "sts.localhost.com api.localhost.com jsclient.localhost.com mvcclient.localhost.com"
+    #kubernetes.io/ingress.serverAlias: "sts.localhost.com api.localhost.com jsclient.localhost.com mvcclient.localhost.com"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4256k"
+  name: nginx-proxy
+  namespace: identityserver-ui
+spec:
+  tls:
+    - hosts:
+      - sts.localhost.com
+      - api.localhost.com
+      - jsclient.localhost.com
+      - mvcclient.localhost.com
+      secretName: tls-secret
+  rules:
+    - host: sts.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: sts-svc
+            servicePort: 80
+    - host: api.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: api-svc
+            servicePort: 80
+    - host: jsclient.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: jsclient-svc
+            servicePort: 80
+    - host: mvcclient.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: mvcclient-svc
+            servicePort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sts-alias
+  namespace: identityserver-ui
+spec:
+  type: ExternalName
+  externalName: sts.localhost.com
