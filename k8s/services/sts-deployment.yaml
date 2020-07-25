@@ -68,7 +68,7 @@ spec:
             secretKeyRef:
               name: sts-dbconnection
               key: DBConnection
-        image: identityserversts
+        image: identityserversts:latest
         imagePullPolicy : IfNotPresent
         name: sts
         resources: {}

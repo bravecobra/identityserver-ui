@@ -24,11 +24,9 @@ spec:
           value: https://sts.localhost.com
         - name: Auth__RedirectUri
           value: https://mvcclient.localhost.com/signin-oidc
-        - name: VIRTUAL_HOST
-          value: mvcclient.localhost.com
         - name: ASPNETCORE_ENVIRONMENT
           value: Development
-        image: mvcclient
+        image: mvcclient:latest
         imagePullPolicy : IfNotPresent
         name: mvcclient
         resources: {}

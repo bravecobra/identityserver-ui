@@ -20,11 +20,9 @@ spec:
       - env:
         - name: Auth__Authority
           value: https://sts.localhost.com
-        - name: VIRTUAL_HOST
-          value: jsclient.localhost.com
         - name: ASPNETCORE_ENVIRONMENT
           value: Development
-        image: jsclient
+        image: jsclient:latest
         imagePullPolicy: IfNotPresent
         name: jsclient
         resources: {}

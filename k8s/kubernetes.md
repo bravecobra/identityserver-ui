@@ -145,7 +145,7 @@ kubectl create secret tls tls-secret --key ./compose/nginx/certs/localhost.com.k
 in order to make the pods be able to resolve the `localhost.com` when they want to verify the certificate, we need to make sure that the internal DNS service of the cluster is able to resolve the A- and CNAME records to the service `nginx-ingress-controller` that'll be created by helm in the next step. In order to do so we can change the CoreDNS configuration to rewrite incoming DNS queries and resolve them to that service.
 
 ```powershell
-kubectl replace -n kube-system -f coredns_cm.yaml
+kubectl replace -n kube-system -f coredns.yml
 ```
 
 #### Ingress

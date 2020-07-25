@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
+using IdentityServerSts.Configuration;
 using IdentityServerSts.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +40,7 @@ namespace IdentityServerSts
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-
+            
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("IdentityDb")));
             services.AddDistributedMemoryCache();
             services.AddDefaultIdentity<ApplicationUser>(options =>
@@ -51,13 +52,17 @@ namespace IdentityServerSts
                 .AddDefaultTokenProviders();
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto| ForwardedHeaders.XForwardedHost;
+
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
             });
 
             var builder = services.AddIdentityServer(options =>
                 {
                     options.IssuerUri = _configuration.GetValue<string>("IdentityServer:IssuerUri");
-                    options.PublicOrigin = _configuration.GetValue<string>("IdentityServer:PublicOrigin");
+                    //options.PublicOrigin = _configuration.GetValue<string>("IdentityServer:PublicOrigin");
                     options.Events.RaiseErrorEvents = true;
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
@@ -95,17 +100,29 @@ namespace IdentityServerSts
                             .AllowAnyHeader()
                             .AllowAnyMethod();
                     }
-
                 });
             });
-
+            services.ConfigureNonBreakingSameSiteCookies();
+            // services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            // {
+            //     options.Cookie.SameSite = SameSiteMode.None;
+            //     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            //     options.Cookie.IsEssential = true;
+            // });
             services.AddAuthentication(options =>
                 {
                     // options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     // options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     // options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddCookie()
+                .AddCookie(
+                //     options =>
+                // {
+                //     options.Cookie.IsEssential = true;
+                //     options.Cookie.SameSite = SameSiteMode.None;
+                //     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                // }
+                    )
                 .AddGoogle("Google", options =>
                 {
                     //options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
@@ -194,7 +211,26 @@ namespace IdentityServerSts
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseForwardedHeaders();
+            var forwardOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false
+            };
+
+            forwardOptions.KnownNetworks.Clear();
+            forwardOptions.KnownProxies.Clear();
+
+            // ref: https://github.com/aspnet/Docs/issues/2384
+            app.UseForwardedHeaders(forwardOptions);
+
+
+            //app.UseMiddleware<ForceSslMiddleware>();
+            // app.Use((context, next) =>
+            // {
+            //     //if (Environment.GetEnvironmentVariable("SSL_OFFLOAD") == "true")
+            //     context.Request.Scheme = "https";
+            //     return next();
+            // });
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -203,7 +239,7 @@ namespace IdentityServerSts
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("default");
-
+            app.UseCookiePolicy();
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();

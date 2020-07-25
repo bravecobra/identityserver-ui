@@ -23,11 +23,9 @@ spec:
           value: https://jsclient.localhost.com
         - name: Auth__Authority
           value: https://sts.localhost.com
-        - name: VIRTUAL_HOST
-          value: api.localhost.com
         - name: ASPNETCORE_ENVIRONMENT
           value: Development
-        image: api
+        image: api:latest
         imagePullPolicy : IfNotPresent
         name: api
         resources: {}
