@@ -6,9 +6,7 @@ This project provides a more complete web interface, but still based on the quic
 
 The `docker-compose` setup puts the Identity Server (STS), API's and any clients behind a reverse-proxy (nginx) and offers SSL-termination at the proxy.
 
-
-
-<img src="./docs/images/network.png" style="zoom:66%;" />
+![Network](./docs/images/network.png)
 
 ## How to run
 
@@ -34,7 +32,7 @@ As this setup is intended for development purposes, we can make due with a domai
 
 ### Certificates
 
-We also need certificates in order to serve on HTTPS. We'll make our own self-signed certificates with [mkcert](https://github.com/FiloSottile/mkcert). 
+We also need certificates in order to serve on HTTPS. We'll make our own self-signed certificates with [mkcert](https://github.com/FiloSottile/mkcert).
 
 > If the domain is publicly available through DNS, you can use [Let's Encypt](https://letsencrypt.org/). Nginx-proxy has support for that, which is left out in this setup.
 
@@ -71,15 +69,15 @@ We want to allow authentication through google as well. For this to work, we nee
 
 Add a new project and enable the Google+ API
 
-<img src="./docs/images/Google-oidc-0.png" style="zoom:67%;" />
+![new project](./docs/images/Google-oidc-0.png)
 
 Add a OAuth 2.0 Client called `IdentityServer4-UI`. You can choose whatever name you like.
 
-<img src="./docs/images/Google-oidc-1.png" style="zoom:67%;" />
+![Credentials](./docs/images/Google-oidc-1.png)
 
 And configure the possible redirects. We added both the `localhost` with the ports (for running directly from Visual Studio without docker-compose) and the URI's used by `docker-compose`.
 
-<img src="./docs/images/Google-oidc-2.png" style="zoom:67%;" />
+![Client ID](./docs/images/Google-oidc-2.png)
 
 Capture the ClientID and ClientSecret on the same page on the right.
 
@@ -107,7 +105,7 @@ docker-compose build
 docker-compose up -d
 ```
 
-Now point your browser to https://sts.localhost.com to reach the IdentityServer itself and login. Or use one of the two preconfigured clients at https://jsclient.localhost.com or https://mvcclient.localhost.com. 
+Now point your browser to [https://sts.localhost.com](https://sts.localhost.com) to reach the IdentityServer itself and login. Or use one of the two preconfigured clients at [https://jsclient.localhost.com](https://jsclient.localhost.com) or [https://mvcclient.localhost.com](https://mvcclient.localhost.com).
 
 ### Compile it yourself
 
