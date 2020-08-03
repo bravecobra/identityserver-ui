@@ -7,9 +7,3 @@ This project provides a more complete web interface, but still based on the quic
 The `docker-compose` setup puts the Identity Server (STS), API's and any clients behind a reverse-proxy (nginx) and offers SSL-termination at the proxy.
 
 ![Network](./images/network.png)
-
-## Compile it yourself
-
-```bash
-docker-compose build
-```
