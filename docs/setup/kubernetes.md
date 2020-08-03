@@ -1,10 +1,10 @@
 # Setup Kubernetes
 
-## Prerequisites
+## Prepare the cluster
 
-### Kubernetes cluster
+I use on [Docker Desktop](https://www.docker.com/products/docker-desktop) `2.2.0.5` which comes with Kubernetes `1.15.5` on Windows and Mac. Testing has only been done on Windows.
 
-I tested this on Docker Desktop `2.2.0.5` which comes with kubernetes `1.15.5` on Windows.
+Make you also completes the other [prerequisites](../prerequisites/)
 
 ### MetalLB
 
@@ -32,7 +32,7 @@ kubectl apply -f ./k8s/infrastructure/tiller/rbac-config.yaml
 kubectl apply -f ./k8s/infrastructure/tiller/tiller.yaml
 ```
 
-## Build
+## Build the docker images
 
 We need to make sure we build the latest images. We'll use `docker-compose` to do that easily.
 
@@ -40,7 +40,7 @@ We need to make sure we build the latest images. We'll use `docker-compose` to d
 docker-compose build
 ```
 
-## Deploy
+## Deploy to the cluster
 
 ### Create a new namespace
 
@@ -51,6 +51,8 @@ kubectl apply -f ./k8s/infrastructure/namespace.yaml
 ```
 
 ### SQL Server
+
+#### Change the default password
 
 Create a k8s secret for SQL server by first base64 encoding the actual password in powershell or bash, depending on you OS:
 
@@ -74,11 +76,13 @@ kubectl create secret generic sqlserverdb --namespace=identityserver-ui --from-l
 
 Now deploy the SQL Server onto your kubernetes cluster in the new namespace
 
+#### Deploy SQLServer
+
 ```powershell
 kubectl apply -f ./k8s/services/sqlserverdb-deployment.yaml
 ```
 
-### CA Certificate
+### Create the CA Certificate ConfigMap
 
 First add the CA Root certificate as a ConfigMap, that was created during the [certificates setup](../prerequisites/#certificates).
 
@@ -88,7 +92,7 @@ kubectl create configmap ca-pemstore --from-file=./compose/nginx/certs/cacerts.p
 
 That way we can mount the CA Root certificate into our services as a configmap (as adding an extra file)
 
-### STS
+### Deploy STS
 
 Create a config map from the `SeedData.json` file so we can use in the sts service.
 
@@ -126,25 +130,15 @@ kubectl apply -f ./k8s/services/google-data.yml
 kubectl apply -f ./k8s/services/sts-deployment.yaml
 ```
 
-### API
+### Deploy the API and clients
 
 ```powershell
 kubectl apply -f ./k8s/services/api-deployment.yaml
-```
-
-### JSClient
-
-```powershell
 kubectl apply -f ./k8s/services/jsclient-deployment.yaml
-```
-
-### MVCCLient
-
-```powershell
 kubectl apply -f ./k8s/services/mvcclient-deployment.yaml
 ```
 
-### Ingress controller
+### Map incoming traffic (Ingress controller)
 
 There are several ingress controllers to choose from according to [kubernetes.io](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/).
 To keep it fairly simple, I choose the plain nginx one. You could choose any other like [Istio](https://istio.io/) or [Traefik](https://github.com/containous/traefik). They are bit more involved configuration wise and offer a bit more options.
@@ -158,7 +152,7 @@ First add the certificate for all our hosts we want SSL for. We generated this c
 kubectl create secret tls tls-secret --key ./compose/nginx/certs/localhost.com.key --cert ./compose/nginx/certs/localhost.com.crt --namespace=identityserver-ui
 ```
 
-#### DNS
+#### Internal K8S DNS
 
 in order to make the pods be able to resolve the `localhost.com` when they want to verify the certificate, we need to make sure that the internal DNS service of the cluster is able to resolve the A- and CNAME records to the service `nginx-ingress-controller` that'll be created by helm in the next step. In order to do so we can change the CoreDNS configuration to rewrite incoming DNS queries and resolve them to that service.
 
@@ -175,7 +169,7 @@ kubectl apply -f ./k8s/infrastructure/proxy/nginx-ingress.yaml
 
 ### Testing it out
 
-Surf to your deployment:
+Everything should now work as intended. Navigate to your deployment:
 
 * [STS](https://sts.localhost.com)
 * [JSCLient](https://jsclient.localhost.com)

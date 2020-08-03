@@ -26,9 +26,7 @@ We also need certificates in order to serve on HTTPS. We'll make our own self-si
 
 > If the domain is publicly available through DNS, you can use [Let's Encypt](https://letsencrypt.org/). Nginx-proxy has support for that, which is left out in this setup.
 
-### MkCert
-
-#### Install MkCert
+### Install MkCert
 
 You can either just download the binary and add it to your `PATH` environment variable or use choclately to install it.
 
@@ -36,7 +34,7 @@ You can either just download the binary and add it to your `PATH` environment va
 choco install mkcert
 ```
 
-#### Create the root certificate
+### Create the root certificate
 
 Use [mkcert](https://github.com/FiloSottile/mkcert) to generate local self-signed certificates.
 
@@ -49,7 +47,7 @@ copy $env:LOCALAPPDATA\mkcert\rootCA.pem ./cacerts.pem
 copy $env:LOCALAPPDATA\mkcert\rootCA.pem ./cacerts.crt
 ```
 
-#### Create the `localhost.com` certificates
+### Create the `localhost.com` certificates
 
 Generate a certificate for `localhost.com` with wildcards for the subdomains. The name of the certificate files need to match with actual domain-names in order for the nginx-proxy to pick them up correctly. We want both the crt-key and the pfx version.
 
