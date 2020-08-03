@@ -2,13 +2,23 @@
 
 ## Prerequisites
 
+### Kubernetes cluster
+
+I tested this on Docker Desktop 2.2.0.5 which comes with kubernetes v1.15.5 on Windows.
+
 ### MetalLB
 
-If you're not on a hosted cluster (like GCE, AKS, EKS or DigitialOcean), you need to provide load-balancing implementation in order to have externalip assigned automatically. I used MetalLB for this on my 1-node local cluster
+If you're not on a hosted cluster (like GCE, AKS, EKS or DigitialOcean), you'll want to provide a load-balancing implementation in order to have external-ip assigned automatically. I used MetalLB for this on my 1-node local cluster
 
 ```powershell
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/metallb.yaml
+```
+
+if, for some reason, you get the error that the memberlist secret does not exist, create it manually:
+
+```powershell
+kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 ```
 
 ### Tiller (2.x)
@@ -18,8 +28,16 @@ As we use helm to install the nginx-ingress, we'll need to have it installed on 
 ```powershell
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm repo update
-kubectl apply -f ./k8s/infrastructure/rbac-config.yaml
-kubectl apply -f ./k8s/infrastructure/tiller.yaml
+kubectl apply -f ./k8s/infrastructure/tiller/rbac-config.yaml
+kubectl apply -f ./k8s/infrastructure/tiller/tiller.yaml
+```
+
+## Build
+
+We need to make sure we build the latest images. We'll use `docker-compose` to do that easily.
+
+```powershell
+docker-compose build
 ```
 
 ## Deploy
@@ -29,7 +47,7 @@ kubectl apply -f ./k8s/infrastructure/tiller.yaml
 Run the following command to create a new namespace called `identityserver-ui`
 
 ```bash
-kubctl apply -f ./k8s/namespace.yml
+kubectl apply -f ./k8s/infrastructure/namespace.yaml
 ```
 
 ### SQL Server
@@ -104,7 +122,7 @@ type: Opaque
 ```
 
 ```powershell
-kubectl apply -f ./k8s/services/google-data.yaml
+kubectl apply -f ./k8s/services/google-data.yml
 kubectl apply -f ./k8s/services/sts-deployment.yaml
 ```
 
@@ -145,14 +163,14 @@ kubectl create secret tls tls-secret --key ./compose/nginx/certs/localhost.com.k
 in order to make the pods be able to resolve the `localhost.com` when they want to verify the certificate, we need to make sure that the internal DNS service of the cluster is able to resolve the A- and CNAME records to the service `nginx-ingress-controller` that'll be created by helm in the next step. In order to do so we can change the CoreDNS configuration to rewrite incoming DNS queries and resolve them to that service.
 
 ```powershell
-kubectl replace -n kube-system -f coredns.yml
+kubectl replace -n kube-system -f ./k8s/infrastructure/coredns.yml
 ```
 
 #### Ingress
 
 ```powershell
 helm install --name nginx-ingress stable/nginx-ingress --namespace=identityserver-ui
-kubectl apply -f ./k8s/infrastructure/nginx-ingress.yaml
+kubectl apply -f ./k8s/infrastructure/proxy/nginx-ingress.yaml
 ```
 
 ### Testing it out
