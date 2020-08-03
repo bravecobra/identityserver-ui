@@ -17,7 +17,6 @@ using System;
 using System.Reflection;
 using IdentityServerSts.Configuration;
 using IdentityServerSts.Models;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
@@ -62,7 +61,7 @@ namespace IdentityServerSts
             var builder = services.AddIdentityServer(options =>
                 {
                     options.IssuerUri = _configuration.GetValue<string>("IdentityServer:IssuerUri");
-                    //options.PublicOrigin = _configuration.GetValue<string>("IdentityServer:PublicOrigin");
+                    options.PublicOrigin = _configuration.GetValue<string>("IdentityServer:PublicOrigin");
                     options.Events.RaiseErrorEvents = true;
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;
@@ -103,20 +102,8 @@ namespace IdentityServerSts
                 });
             });
             services.ConfigureNonBreakingSameSiteCookies();
-            services.AddAuthentication(options =>
-                {
-                    // options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    // options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    // options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                })
-                .AddCookie(
-                //     options =>
-                // {
-                //     options.Cookie.IsEssential = true;
-                //     options.Cookie.SameSite = SameSiteMode.None;
-                //     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                // }
-                    )
+            services.AddAuthentication()
+                .AddCookie()
                 .AddGoogle("Google", options =>
                 {
                     options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
@@ -217,14 +204,6 @@ namespace IdentityServerSts
             // ref: https://github.com/aspnet/Docs/issues/2384
             app.UseForwardedHeaders(forwardOptions);
 
-
-            //app.UseMiddleware<ForceSslMiddleware>();
-            // app.Use((context, next) =>
-            // {
-            //     //if (Environment.GetEnvironmentVariable("SSL_OFFLOAD") == "true")
-            //     context.Request.Scheme = "https";
-            //     return next();
-            // });
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
