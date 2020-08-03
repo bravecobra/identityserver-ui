@@ -103,12 +103,6 @@ namespace IdentityServerSts
                 });
             });
             services.ConfigureNonBreakingSameSiteCookies();
-            // services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-            // {
-            //     options.Cookie.SameSite = SameSiteMode.None;
-            //     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            //     options.Cookie.IsEssential = true;
-            // });
             services.AddAuthentication(options =>
                 {
                     // options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -125,7 +119,7 @@ namespace IdentityServerSts
                     )
                 .AddGoogle("Google", options =>
                 {
-                    //options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.SaveTokens = true;
 
                     options.ClientId = _configuration.GetValue<string>("Google:ClientId");
@@ -239,7 +233,7 @@ namespace IdentityServerSts
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("default");
-            app.UseCookiePolicy();
+            //app.UseCookiePolicy();
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
