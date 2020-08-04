@@ -70,7 +70,9 @@ namespace IdentityServerSts
                 .UseSerilog()
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder
+                        .UseIISIntegration()
+                        .UseStartup<Startup>();
                 });
     }
 }

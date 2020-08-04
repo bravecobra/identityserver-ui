@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/server-alias: "sts.localhost.com,api.localhost.com,jsclient.localhost.com,mvcclient.localhost.com"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4256k"
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+  name: nginx-proxy
+  namespace: identityserver-ui
+spec:
+  tls:
+    - hosts:
+      - sts.localhost.com
+      - api.localhost.com
+      - jsclient.localhost.com
+      - mvcclient.localhost.com
+      secretName: tls-secret
+  rules:
+    - host: sts.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: sts-svc
+            servicePort: 80
+    - host: api.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: api-svc
+            servicePort: 80
+    - host: jsclient.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: jsclient-svc
+            servicePort: 80
+    - host: mvcclient.localhost.com
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: mvcclient-svc
+            servicePort: 80
+

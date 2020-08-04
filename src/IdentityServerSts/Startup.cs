@@ -15,8 +15,8 @@ using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
+using IdentityServerSts.Configuration;
 using IdentityServerSts.Models;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
@@ -39,7 +39,7 @@ namespace IdentityServerSts
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-
+            
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("IdentityDb")));
             services.AddDistributedMemoryCache();
             services.AddDefaultIdentity<ApplicationUser>(options =>
@@ -51,7 +51,11 @@ namespace IdentityServerSts
                 .AddDefaultTokenProviders();
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto| ForwardedHeaders.XForwardedHost;
+
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
             });
 
             var builder = services.AddIdentityServer(options =>
@@ -95,20 +99,14 @@ namespace IdentityServerSts
                             .AllowAnyHeader()
                             .AllowAnyMethod();
                     }
-
                 });
             });
-
-            services.AddAuthentication(options =>
-                {
-                    // options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    // options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                    // options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                })
+            services.ConfigureNonBreakingSameSiteCookies();
+            services.AddAuthentication()
                 .AddCookie()
                 .AddGoogle("Google", options =>
                 {
-                    //options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.SaveTokens = true;
 
                     options.ClientId = _configuration.GetValue<string>("Google:ClientId");
@@ -194,7 +192,18 @@ namespace IdentityServerSts
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseForwardedHeaders();
+            var forwardOptions = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                RequireHeaderSymmetry = false
+            };
+
+            forwardOptions.KnownNetworks.Clear();
+            forwardOptions.KnownProxies.Clear();
+
+            // ref: https://github.com/aspnet/Docs/issues/2384
+            app.UseForwardedHeaders(forwardOptions);
+
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -203,7 +212,7 @@ namespace IdentityServerSts
             app.UseStaticFiles();
             app.UseRouting();
             app.UseCors("default");
-
+            //app.UseCookiePolicy();
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();

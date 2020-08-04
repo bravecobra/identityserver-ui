@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: api
+  name: api
+  namespace: identityserver-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: api
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+      labels:
+        service: api
+    spec:
+      containers:
+      - env:
+        - name: Auth__AllowCORS__0
+          value: https://jsclient.localhost.com
+        - name: Auth__Authority
+          value: https://sts.localhost.com
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        image: api:latest
+        imagePullPolicy : IfNotPresent
+        name: api
+        resources: {}
+        volumeMounts:
+        - name: ca-pemstore
+          mountPath: /etc/ssl/certs/cacerts.pem
+          subPath: cacerts.pem
+          readOnly: false
+      restartPolicy: Always
+      volumes:
+        - name: ca-pemstore
+          configMap:
+            name: ca-pemstore
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-svc
+  namespace: identityserver-ui
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  selector:
+    service: api
+---

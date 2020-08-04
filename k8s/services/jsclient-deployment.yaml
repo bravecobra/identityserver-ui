@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: jsclient
+  name: jsclient
+  namespace: identityserver-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: jsclient
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: jsclient
+    spec:
+      containers:
+      - env:
+        - name: Auth__Authority
+          value: https://sts.localhost.com
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        image: jsclient:latest
+        imagePullPolicy: IfNotPresent
+        name: jsclient
+        resources: {}
+        volumeMounts:
+        - name: ca-pemstore
+          mountPath: /etc/ssl/certs/cacerts.pem
+          subPath: cacerts.pem
+          readOnly: false
+      restartPolicy: Always
+      volumes:
+        - name: ca-pemstore
+          configMap:
+            name: ca-pemstore
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jsclient-svc
+  namespace: identityserver-ui
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  selector:
+    service: jsclient
+---

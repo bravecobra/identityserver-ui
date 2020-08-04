@@ -552,3 +552,4 @@ $RECYCLE.BIN/
 
 src.old/
 certs/
+k8s/services/google-data.yml

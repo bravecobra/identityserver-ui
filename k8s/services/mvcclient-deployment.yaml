@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    service: mvcclient
+  name: mvcclient
+  namespace: identityserver-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: mvcclient
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: mvcclient
+    spec:
+      containers:
+      - env:
+        - name: Api1__Uri
+          value: https://api.localhost.com
+        - name: Auth__Authority
+          value: https://sts.localhost.com
+        - name: Auth__RedirectUri
+          value: https://mvcclient.localhost.com/signin-oidc
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        image: mvcclient:latest
+        imagePullPolicy : IfNotPresent
+        name: mvcclient
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        volumeMounts:
+        - name: ca-pemstore
+          mountPath: /etc/ssl/certs/cacerts.pem
+          subPath: cacerts.pem
+          readOnly: false
+      restartPolicy: Always
+      volumes:
+        - name: ca-pemstore
+          configMap:
+            name: ca-pemstore
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mvcclient-svc
+  namespace: identityserver-ui
+spec:
+  ports:
+  - name: "80"
+    port: 80
+    targetPort: 80
+  selector:
+    service: mvcclient
+---

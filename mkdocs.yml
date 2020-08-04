@@ -1,0 +1,12 @@
+site_name: IdentityServer-UI
+theme:
+  name: material
+nav:
+    - Home: 'index.md'
+    - 'Setup':
+        - 'Prerequisites': 'setup/prerequisites.md'
+        - 'Docker-Compose': 'setup/docker-compose.md'
+        - 'Kubernetes': 'setup/kubernetes.md'
+    - About:
+        - 'License': 'license.md'
+        - 'Release Notes': 'release-notes.md'
