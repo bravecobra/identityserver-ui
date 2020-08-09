@@ -43,17 +43,32 @@ document.getElementById("api").addEventListener("click", api, false);
 document.getElementById("logout").addEventListener("click", logout, false);
 
 var hostname = location.hostname;
+var protocol = location.protocol;
 
 if (hostname === "localhost") {
-    var config = {
-        authority: "https://localhost:5000",
-        client_id: "js",
-        redirect_uri: "http://localhost:5003/callback.html",
-        response_type: "code",
-        scope: "openid profile api1",
-        post_logout_redirect_uri: "http://localhost:5003/index.html",
-    };
-    var apiDomain = "http://localhost:5001";
+    if (protocol === "https:") {
+        var config = {
+            authority: "https://localhost:5000",
+            client_id: "js",
+            redirect_uri: "https://localhost:5003/callback.html",
+            response_type: "code",
+            scope: "openid profile api1",
+            post_logout_redirect_uri: "https://localhost:5003/index.html",
+        };
+        var apiDomain = "https://localhost:5001";
+    }
+    else{
+        var config = {
+            authority: "https://localhost:5000",
+            client_id: "js",
+            redirect_uri: "http://localhost:5003/callback.html",
+            response_type: "code",
+            scope: "openid profile api1",
+            post_logout_redirect_uri: "http://localhost:5003/index.html",
+        };
+        var apiDomain = "http://localhost:5001";
+    }
+
 } else {
     var topleveldomain = extractHostname(hostname, true);
     var config = {

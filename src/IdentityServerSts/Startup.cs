@@ -40,7 +40,12 @@ namespace IdentityServerSts
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             
-            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("IdentityDb")));
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                var connectionstring = _configuration.GetConnectionString("sqlserverdb", "Identity") 
+                                          ?? _configuration.GetConnectionString("IdentityDb");
+                options.UseSqlServer(connectionstring);
+            });
             services.AddDistributedMemoryCache();
             services.AddDefaultIdentity<ApplicationUser>(options =>
                 {
@@ -77,12 +82,16 @@ namespace IdentityServerSts
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddConfigurationStore(options =>
                 {
-                    options.ConfigureDbContext = b => b.UseSqlServer(_configuration.GetConnectionString("ConfigurationDb"),
+                    var connectionstring = _configuration.GetConnectionString("sqlserverdb", "Configuration") 
+                                           ?? _configuration.GetConnectionString("ConfigurationDb");
+                    options.ConfigureDbContext = b => b.UseSqlServer(connectionstring,
                         sql => sql.MigrationsAssembly(migrationsAssembly));
                 })
                 .AddOperationalStore(options =>
                 {
-                    options.ConfigureDbContext = b => b.UseSqlServer(_configuration.GetConnectionString("PersistedGrantDb"),
+                    var connectionstring = _configuration.GetConnectionString("sqlserverdb", "PersistedGrant") 
+                                           ?? _configuration.GetConnectionString("PersistedGrantDb");
+                    options.ConfigureDbContext = b => b.UseSqlServer(connectionstring,
                         sql => sql.MigrationsAssembly(migrationsAssembly));
                 });
 
