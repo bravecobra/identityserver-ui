@@ -5,6 +5,7 @@ nav:
     - Home: 'index.md'
     - 'Setup':
         - 'Prerequisites': 'setup/prerequisites.md'
+        - 'Tye': 'setup/tye.md'
         - 'Docker-Compose': 'setup/docker-compose.md'
         - 'Kubernetes': 'setup/kubernetes.md'
     - About:
