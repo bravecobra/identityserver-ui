@@ -1,0 +1,72 @@
+# tye application configuration file
+# read all about it at https://github.com/dotnet/tye
+#
+# when you've given us a try, we'd love to know what you think:
+#    https://aka.ms/AA7q20u
+#
+name: identityserver-ui
+services:
+- name: sqlserverdb
+  image: microsoft/mssql-server-linux:latest
+  env:
+  - name: SA_PASSWORD
+    value: "Password_123"
+  - name: ACCEPT_EULA
+    value: "Y"
+  bindings:
+    - name: default
+      port: 1433
+    - name: Identity
+      connectionString: Server=${host};Database=IdentityUI;User Id=sa;Password=Password_123;MultipleActiveResultSets=true
+    - name: Configuration
+      connectionString: Server=${host};Database=IdentityUI;User Id=sa;Password=Password_123;MultipleActiveResultSets=true
+    - name: PersistedGrant
+      connectionString: Server=${host};Database=IdentityUI;User Id=sa;Password=Password_123;MultipleActiveResultSets=true
+- name: api
+  project: src/Api/Api.csproj
+  bindings:
+    - port: 5001
+      protocol: https
+  env:
+    - name: Auth__AllowCORS__0
+      value: https://localhost:5003
+    - name: Auth__Authority
+      value: https://localhost:5000
+  volumes:
+    - source: ./compose/nginx/certs/cacerts.crt
+      target: /usr/local/share/ca-certificates/cacerts.crt
+- name: mvcclient
+  project: src/MVCClient/MVCClient.csproj
+  bindings:
+    - port: 5002
+      protocol: https
+  env:
+    - name: Auth__Authority
+      value: https://localhost:5000
+    - name: Auth__RedirectUri
+      value: https://localhost:5002/signin-oidc
+    - name: Api1__Uri
+      value: https://localhost:5001
+- name: jsclient
+  project: src/JavaScriptClient/JavaScriptClient.csproj
+  bindings:
+    - port: 5003
+      protocol: https
+  env:
+    - name: Auth__Authority
+      value: https://localhost:5000
+- name: sts
+  project: src/IdentityServerSts/IdentityServerSts.csproj
+  args: /seed
+  bindings:
+    - port: 5000
+      protocol: https
+  env:
+    - name: Auth__AllowCORS__0
+      value: https://localhost:5003
+    - name: IdentityServer__IssuerUri
+      value: https://localhost:5000
+    - name: IdentityServer__PublicOrigin
+      value: https://localhost:5000
+    - name: Seed__File
+      value: SeedData.tye.json
