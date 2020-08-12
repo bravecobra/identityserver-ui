@@ -11,3 +11,4 @@ nav:
     - About:
         - 'License': 'license.md'
         - 'Release Notes': 'release-notes.md'
+dev_addr: '0.0.0.0:8080'
