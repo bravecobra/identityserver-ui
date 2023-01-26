@@ -1,4 +1,4 @@
-FROM python:3.8.5
+FROM python:3.11.1
 RUN pip install mkdocs
 RUN pip install mkdocs-material
 COPY ./docs /app/docs
